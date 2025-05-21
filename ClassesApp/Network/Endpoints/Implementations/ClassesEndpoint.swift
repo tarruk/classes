@@ -9,7 +9,7 @@ struct Classes {}
 
 extension Classes {
   struct GetAll: Endpoint {
-    typealias Response = [Class]
+    typealias Response = [Course]
     
     var method: HTTPMethod { .get }
     var path: String { "classes" }
