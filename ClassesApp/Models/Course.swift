@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Course: Identifiable, Equatable, Decodable {
+struct Course: Identifiable, Equatable, Codable {
   let id: UUID = UUID()
   let title: String
   let slug: String

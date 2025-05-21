@@ -9,33 +9,25 @@ import SwiftUI
 
 struct ClassesView: View {
   @StateObject var viewModel = ClassesViewModel()
-  
+
   var body: some View {
     ZStack(alignment: .center) {
-        if viewModel.allCourses.isEmpty {
-          //TODO: Show empty state
-        } else {
-          VStack {
-            Toggle("Show only favorites", isOn: $viewModel.showFavoritesOnly)
-              .padding(.horizontal)
-              .onChange(of: viewModel.showFavoritesOnly) { _ in
-                viewModel.applyFilter()
-              }
-            List(viewModel.coursesToShow) { course in
-              CourseRow(course: course)
-                .onTapGesture {
-                  Task {
-                    await viewModel.onRowTapped(course)
-                  }
-                }
-            }
-            .listStyle(.plain)
-            .scrollIndicators(.hidden)
-            .refreshable {
-              await viewModel.fetchCourses()
+      if viewModel.allCourses.isEmpty && !viewModel.isLoading {
+        EmptyStateView(title: "no_courses_available".localized)
+      } else {
+        VStack {
+          Picker("filter".localized, selection: $viewModel.filter) {
+            ForEach(CourseFilter.allCases) { filter in
+              Text(filter.title).tag(filter)
             }
           }
+          .pickerStyle(.segmented)
+          .padding()
+
+          courseListView
         }
+      }
+
       if viewModel.isLoading {
         ProgressView()
       }
@@ -44,14 +36,47 @@ struct ClassesView: View {
       await viewModel.fetchCourses()
     }
   }
+
+  @ViewBuilder
+  private var courseListView: some View {
+    switch viewModel.filter {
+    case .all:
+      courseList(viewModel.allCourses)
+
+    case .favorites:
+      if viewModel.favCourses.isEmpty {
+        EmptyStateView(title: "no_favorites_yet".localized)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .multilineTextAlignment(.center)
+      } else {
+        courseList(viewModel.favCourses)
+      }
+    }
+  }
+
+  private func courseList(_ courses: [Course]) -> some View {
+    List(courses) { course in
+      CourseRow(course: course)
+        .onTapGesture {
+          Task {
+            await viewModel.onRowTapped(course)
+          }
+        }
+    }
+    .listStyle(.plain)
+    .scrollIndicators(.hidden)
+    .refreshable {
+      await viewModel.fetchCourses()
+    }
+  }
 }
 
 #Preview {
   ClassesView(viewModel: {
     let vm = ClassesViewModel()
-    vm.coursesToShow = [
+    vm.allCourses = [
       Course.mock,
-      Course.mock,
+      Course.mock
     ]
     return vm
   }())
