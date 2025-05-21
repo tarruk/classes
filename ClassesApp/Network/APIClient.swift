@@ -64,6 +64,10 @@ final class APIClient {
       throw APIError.statusCode(httpResponse.statusCode)
     }
 
+    if data.isEmpty, E.Response.self == EmptyResponse.self {
+      return EmptyResponse() as! E.Response
+    }
+
     do {
       return try JSONDecoder().decode(E.Response.self, from: data)
     } catch {

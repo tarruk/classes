@@ -9,7 +9,7 @@ struct Classes {}
 
 extension Classes {
   struct GetAll: Endpoint {
-    typealias Response = [Class]
+    typealias Response = [Course]
     
     var method: HTTPMethod { .get }
     var path: String { "classes" }
@@ -24,7 +24,6 @@ extension Classes {
   }
 
   struct DeleteFromFavorites: Endpoint {
-    
     typealias Response = EmptyResponse
     
     let slug: String
