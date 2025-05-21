@@ -10,7 +10,7 @@ struct Classes {}
 extension Classes {
   struct GetAll: Endpoint {
     typealias Response = [Course]
-
+    
     var method: HTTPMethod { .get }
     var path: String { "classes" }
     var parameters: [String : Any?]? { nil }
