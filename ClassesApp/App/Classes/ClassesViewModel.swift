@@ -9,15 +9,22 @@ import Foundation
 
 @MainActor
 final class ClassesViewModel: ObservableObject {
-  @Published var isLoading = false
-  @Published var showFavoritesOnly: Bool = false
-  @Published var errorMessage: String?
-  @Published var coursesToShow: [Course] = []
+  // TODO: This key could be moved to a dedicated constants file for better organization
+  private let classesStorageKey = "classes_storage_key"
   
-  private(set) var allCourses: [Course] = []
-  private(set) var favCourses: [Course] = []
+  @Published var filter: CourseFilter = .all
+  @Published var isLoading = false
+  
+  // TODO: This could be improved by showing an error card or any kind of UI when this message appears
+  @Published var errorMessage: String?
+
+  @Published var allCourses: [Course] = []
+  @Published var favCourses: [Course] = []
   
   func fetchCourses() async {
+    if let cachedCourses = StorageManager.load([Course].self, forKey: classesStorageKey) {
+      self.allCourses = cachedCourses
+    }
     isLoading = true
     do {
       let courses = try await APIClient.shared.request(Classes.GetAll())
@@ -28,20 +35,14 @@ final class ClassesViewModel: ObservableObject {
         updated.favorite = favSlugs.contains(course.slug)
         return updated
       }
+      favCourses = allCourses.filter { $0.favorite }
 
-      applyFilter()
+      StorageManager.save(courses, forKey: classesStorageKey)
     } catch let error as APIError {
       errorMessage = error.message
     } catch {
       errorMessage = error.localizedDescription
     }
-  }
-  
-  func applyFilter() {
-    let filtered = showFavoritesOnly
-      ? allCourses.filter { $0.favorite }
-      : allCourses
-    coursesToShow = filtered
   }
   
   func onRowTapped(_ course: Course) async {
